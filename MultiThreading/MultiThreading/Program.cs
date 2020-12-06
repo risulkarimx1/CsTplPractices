@@ -27,22 +27,16 @@ namespace MultiThreading
 
         static void Main(string[] args)
         {
-            var cts = new CancellationTokenSource();
-            var token = cts.Token;
-            var t = new Task(()=> NumberGenerator(token));
-            token.Register( () => IsCanceled(1)); // to get notified when task is cancelled
+            var regular = new CancellationTokenSource();
+            var emergency = new CancellationTokenSource();
+
+            var anyParanoid = CancellationTokenSource.CreateLinkedTokenSource(regular.Token, emergency.Token);
+            
+            var t = new Task(()=> NumberGenerator(anyParanoid.Token));
             t.Start();
 
-            var cts2 = new CancellationTokenSource();
-            var token2 = cts2.Token;
-            var t2 = new Task(() => NumberGenerator(token2));
-            t2.Start();
-            token2.Register(() => IsCanceled(2));
-
             Console.ReadKey();
-            cts.Cancel();
-            cts2.Cancel();
-
+            regular.Cancel();
             Console.WriteLine("Main program done");
             Console.ReadKey();
         }
