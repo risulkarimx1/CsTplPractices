@@ -7,30 +7,25 @@ namespace MultiThreading
 {
     class Program
     {
-        // ways to stop task
-        public static void NumberGenerator(CancellationToken cts)
+
+        static void WaitingTask(int time)
         {
-            var rand = new Random();
-            while (true)
-            {
-                cts.ThrowIfCancellationRequested();
-                var r = rand.Next(10000);
-                Console.WriteLine($"id = {Task.CurrentId} --  {r}");
-                // waits for 5 seconds... check if it was cancelled manually from outside
-                var cancelled = cts.WaitHandle.WaitOne(5000);
-                Console.WriteLine(cancelled ? "thread cancelled" : "was not cancelled");
-            }
+            Console.WriteLine($"at task id {Task.CurrentId}");
+            Thread.Sleep(time);
+            Console.WriteLine($"Done task id {Task.CurrentId}");
         }
 
         static void Main(string[] args)
         {
-            var cts = new CancellationTokenSource();
-            var token = cts.Token;
-            
-            var t = new Task(()=> NumberGenerator(token));
-            t.Start();
-            Console.ReadKey();
-            cts.Cancel();
+            var t1 = new Task(() => WaitingTask(2000));
+            var t2 = new Task(() => WaitingTask(3000));
+            t1.Start();
+            t2.Start();
+
+            Task.WaitAll(t1, t2);
+
+            Console.WriteLine("Done with tasks");
+
             Console.ReadKey();
         }
     }}
