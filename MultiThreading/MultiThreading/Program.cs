@@ -1,57 +1,62 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.CompilerServices;
 
 namespace MultiThreading
 {
-    class Program
+    public class BankAccount
     {
-        static void Main(string[] args)
-        {
-            try
-            {
-                TaskCreatorMethod();
-            }
-            catch (AggregateException ae)
-            {
-                foreach (var ex in ae.InnerExceptions)
-                {
-                    Console.WriteLine($" Handled outside {ex.GetType()} from source {ex.Source}");
-                }
-            }
+        object padLock = new object();
+        public int Balacne { get; private set; }
 
-            Console.WriteLine("Completed");
-            Console.ReadKey();
+        public void AddBalance(int amt)
+        {
+            lock (padLock)
+            {
+                Balacne += amt;
+            }
         }
 
-        private static void TaskCreatorMethod()
+        public void DeductBalance(int amt)
         {
-            var t1 = new Task(() => { throw new InvalidOperationException("Invalid ops exception") {Source = "T1"}; });
-
-            var t2 = new Task(() => { throw new AccessViolationException("invalid access") {Source = "T2"}; });
-
-            t1.Start();
-            t2.Start();
-
-            try
+            lock (padLock)
             {
-                // Exception only gets propagated with wait all/any is called
-                Task.WaitAll(t1, t2);
+                Balacne -= amt;
             }
-            catch (AggregateException ae)
+        }
+    }
+    class Program
+    { 
+
+        private static void Main(string [] arg)
+        {
+            var ba = new BankAccount();
+
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < 1000; i++)
             {
-                ae.Handle(ex =>
+                var t = new Task(() =>
                 {
-                    // if invalidops exception, dont propagate ... throw otherwise
-                    if (ex is InvalidOperationException)
-                    {
-                        Console.WriteLine($"inside exception handled {ex.GetType()} from source {ex.Source}");
-                        return true;
-                    }
-
-                    return false;
+                    ba.AddBalance(100);
                 });
+                t.Start();
             }
+
+            for (int i = 0; i < 1000; i++)
+            {
+                var t = new Task(() =>
+                {
+                    ba.DeductBalance(100);
+                });
+                t.Start();
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            Console.WriteLine($"End balance {ba.Balacne}");
+
         }
     }}
