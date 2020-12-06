@@ -13,11 +13,8 @@ namespace MultiThreading
             var rand = new Random();
             while (true)
             {
-                if (cts.IsCancellationRequested)
-                {
-                    break;
-                }
-
+                // Recommended way is to throw exception... its not propagated 
+                cts.ThrowIfCancellationRequested();
                 var r = rand.Next(10000);
                 Console.WriteLine(r);
             }
