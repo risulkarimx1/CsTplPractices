@@ -9,15 +9,27 @@ namespace MultiThreading
     {
         static void Main(string[] args)
         {
-            var t1 = new Task(() =>
+            try
             {
-                throw new InvalidOperationException("Invalid ops exception"){Source =  "T1"};
-            });
+                TaskCreatorMethod();
+            }
+            catch (AggregateException ae)
+            {
+                foreach (var ex in ae.InnerExceptions)
+                {
+                    Console.WriteLine($" Handled outside {ex.GetType()} from source {ex.Source}");
+                }
+            }
 
-            var t2 = new Task(() =>
-            {
-                throw new AccessViolationException("invalid access"){Source = "T2"};
-            });
+            Console.WriteLine("Completed");
+            Console.ReadKey();
+        }
+
+        private static void TaskCreatorMethod()
+        {
+            var t1 = new Task(() => { throw new InvalidOperationException("Invalid ops exception") {Source = "T1"}; });
+
+            var t2 = new Task(() => { throw new AccessViolationException("invalid access") {Source = "T2"}; });
 
             t1.Start();
             t2.Start();
@@ -29,13 +41,17 @@ namespace MultiThreading
             }
             catch (AggregateException ae)
             {
-                foreach (var ex in ae.InnerExceptions)
+                ae.Handle(ex =>
                 {
-                    Console.WriteLine($"Exception of type {ex.GetType()} from source: {ex.Source}");
-                }
-            }
+                    // if invalidops exception, dont propagate ... throw otherwise
+                    if (ex is InvalidOperationException)
+                    {
+                        Console.WriteLine($"inside exception handled {ex.GetType()} from source {ex.Source}");
+                        return true;
+                    }
 
-            Console.WriteLine("Completed");
-            Console.ReadKey();
+                    return false;
+                });
+            }
         }
     }}
