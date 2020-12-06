@@ -13,31 +13,24 @@ namespace MultiThreading
             var rand = new Random();
             while (true)
             {
-                // Recommended way is to throw exception... its not propagated 
                 cts.ThrowIfCancellationRequested();
                 var r = rand.Next(10000);
                 Console.WriteLine($"id = {Task.CurrentId} --  {r}");
+                // waits for 5 seconds... check if it was cancelled manually from outside
+                var cancelled = cts.WaitHandle.WaitOne(5000);
+                Console.WriteLine(cancelled ? "thread cancelled" : "was not cancelled");
             }
-        }
-
-        static void IsCanceled(int? taskId)
-        {
-            Console.WriteLine($"task id {taskId} is cancelled");
         }
 
         static void Main(string[] args)
         {
-            var regular = new CancellationTokenSource();
-            var emergency = new CancellationTokenSource();
-
-            var anyParanoid = CancellationTokenSource.CreateLinkedTokenSource(regular.Token, emergency.Token);
+            var cts = new CancellationTokenSource();
+            var token = cts.Token;
             
-            var t = new Task(()=> NumberGenerator(anyParanoid.Token));
+            var t = new Task(()=> NumberGenerator(token));
             t.Start();
-
             Console.ReadKey();
-            regular.Cancel();
-            Console.WriteLine("Main program done");
+            cts.Cancel();
             Console.ReadKey();
         }
     }}
