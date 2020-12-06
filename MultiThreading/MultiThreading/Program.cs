@@ -16,7 +16,7 @@ namespace MultiThreading
                 // Recommended way is to throw exception... its not propagated 
                 cts.ThrowIfCancellationRequested();
                 var r = rand.Next(10000);
-                Console.WriteLine(r);
+                Console.WriteLine($"id = {Task.CurrentId} --  {r}");
             }
         }
 
@@ -27,8 +27,15 @@ namespace MultiThreading
             var t = new Task(()=> NumberGenerator(token));
             t.Start();
 
+            var cts2 = new CancellationTokenSource();
+            var t2 = new Task(() => NumberGenerator(cts2.Token));
+            t2.Start();
+
             Console.ReadKey();
             cts.Cancel();
+            cts2.Cancel();
+
+
             Console.WriteLine("Main program done");
             Console.ReadKey();
         }
