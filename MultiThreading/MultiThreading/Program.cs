@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.CompilerServices;
 
@@ -6,23 +7,32 @@ namespace MultiThreading
 {
     class Program
     {
-        // ways to make tasks
-
-        public static void Write(Char c)
+        // ways to stop task
+        public static void NumberGenerator(CancellationToken cts)
         {
-            var i = 1000;
-            while (i-- > 0)
+            var rand = new Random();
+            while (true)
             {
-                Console.Write(c);
+                if (cts.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var r = rand.Next(10000);
+                Console.WriteLine(r);
             }
         }
 
         static void Main(string[] args)
         {
-            Task.Factory.StartNew(() => Write('_')); // starts right away
-            Task t = new Task(()=> Write('-')); // creates a task
-            t.Start();// now start
-            Write(','); // running on main thread
+            var cts = new CancellationTokenSource();
+            var token = cts.Token;
+            var t = new Task(()=> NumberGenerator(token));
+            t.Start();
+
+            Console.ReadKey();
+            cts.Cancel();
+            Console.WriteLine("Main program done");
+            Console.ReadKey();
         }
-    }
-}
+    }}
