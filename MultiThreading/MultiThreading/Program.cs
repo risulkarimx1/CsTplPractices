@@ -22,7 +22,7 @@ namespace MultiThreading
             t1.Start();
             t2.Start();
 
-            Task.WaitAll(t1, t2);
+            Task.WaitAny(new Task[]{ t1, t2 }, 1000); // added a max time span
 
             Console.WriteLine("Done with tasks");
 
