@@ -2,29 +2,28 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace MultiThreading
 {
     public class BankAccount
     {
-        object padLock = new object();
-        public int Balacne { get; private set; }
+        private int _balance;
+
+        public int Balance
+        {
+            get => _balance;
+            private set => _balance = value;
+        }
 
         public void AddBalance(int amt)
         {
-            lock (padLock)
-            {
-                Balacne += amt;
-            }
+            // add for addition... there are increment for ++ and --..
+            Interlocked.Add(ref _balance, amt);
         }
 
         public void DeductBalance(int amt)
         {
-            lock (padLock)
-            {
-                Balacne -= amt;
-            }
+            Interlocked.Add(ref _balance, - amt);
         }
     }
     class Program
@@ -56,7 +55,7 @@ namespace MultiThreading
 
             Task.WaitAll(tasks.ToArray());
 
-            Console.WriteLine($"End balance {ba.Balacne}");
+            Console.WriteLine($"End balance {ba.Balance}");
 
         }
     }}
