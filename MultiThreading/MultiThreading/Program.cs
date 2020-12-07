@@ -17,13 +17,12 @@ namespace MultiThreading
 
         public void AddBalance(int amt)
         {
-            // add for addition... there are increment for ++ and --..
-            Interlocked.Add(ref _balance, amt);
+            _balance += amt;
         }
 
         public void DeductBalance(int amt)
         {
-            Interlocked.Add(ref _balance, - amt);
+            _balance -= amt;
         }
     }
     class Program
@@ -35,23 +34,57 @@ namespace MultiThreading
 
             var tasks = new List<Task>();
 
+            var spinLock = new SpinLock();
+
             for (int i = 0; i < 1000; i++)
             {
-                var t = new Task(() =>
+                var t = Task.Factory.StartNew(() =>
                 {
-                    ba.AddBalance(100);
+                    var couldLock = false;
+                    try
+                    {
+                        spinLock.Enter(ref couldLock);
+                        if (couldLock)
+                        {
+                            ba.AddBalance(100);
+                        }
+                    }
+                    finally
+                    {
+                        if (couldLock)
+                        {
+                            spinLock.Exit();
+                        }
+                    }
+                    
                 });
-                t.Start();
+                tasks.Add(t);
             }
 
             for (int i = 0; i < 1000; i++)
             {
-                var t = new Task(() =>
+                var t = Task.Factory.StartNew(() =>
                 {
-                    ba.DeductBalance(100);
+                    var couldLock = false;
+                    try
+                    {
+                        spinLock.Enter(ref couldLock);
+                        if (couldLock)
+                        {
+                            ba.DeductBalance(100);
+                        }
+                    }
+                    finally
+                    {
+                        if (couldLock)
+                        {
+                            spinLock.Exit();
+                        }
+                    }
                 });
-                t.Start();
+                tasks.Add(t);
             }
+
 
             Task.WaitAll(tasks.ToArray());
 
