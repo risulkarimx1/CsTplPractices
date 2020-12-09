@@ -25,70 +25,39 @@ namespace MultiThreading
             _balance -= amt;
         }
     }
+
     class Program
-    { 
-
-        private static void Main(string [] arg)
+    {
+        private static SpinLock sl = new SpinLock(true);
+        public static void LockRecursion(int x)
         {
-            var ba = new BankAccount();
-
-            var tasks = new List<Task>();
-
-            var spinLock = new SpinLock();
-
-            for (int i = 0; i < 1000; i++)
+            bool lockTaken = false;
+            try
             {
-                var t = Task.Factory.StartNew(() =>
-                {
-                    var couldLock = false;
-                    try
-                    {
-                        spinLock.Enter(ref couldLock);
-                        if (couldLock)
-                        {
-                            ba.AddBalance(100);
-                        }
-                    }
-                    finally
-                    {
-                        if (couldLock)
-                        {
-                            spinLock.Exit();
-                        }
-                    }
-                    
-                });
-                tasks.Add(t);
+                sl.Enter(ref lockTaken);
             }
-
-            for (int i = 0; i < 1000; i++)
+            catch (LockRecursionException e)
             {
-                var t = Task.Factory.StartNew(() =>
-                {
-                    var couldLock = false;
-                    try
-                    {
-                        spinLock.Enter(ref couldLock);
-                        if (couldLock)
-                        {
-                            ba.DeductBalance(100);
-                        }
-                    }
-                    finally
-                    {
-                        if (couldLock)
-                        {
-                            spinLock.Exit();
-                        }
-                    }
-                });
-                tasks.Add(t);
+                Console.WriteLine($"exception is {e}");
             }
-
-
-            Task.WaitAll(tasks.ToArray());
-
-            Console.WriteLine($"End balance {ba.Balance}");
-
+            finally
+            {
+                if (lockTaken)
+                {
+                    Console.WriteLine($"Lock was taken with the value {x}");
+                    LockRecursion(x-1);
+                    sl.Exit();
+                }
+                else
+                {
+                    Console.WriteLine($"failed to take a lock with the value {x}");
+                }
+            }
         }
-    }}
+
+        private static void Main(string[] arg)
+        {
+            LockRecursion(5);
+        }
+    }
+}
