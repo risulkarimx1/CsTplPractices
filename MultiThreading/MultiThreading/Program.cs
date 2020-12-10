@@ -36,77 +36,61 @@ namespace MultiThreading
 
     class Program
     {
-
+        private static ReaderWriterLockSlim padLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private static Random rand = new Random();
         private static void Main(string[] arg)
         {
-            BankAccount ba = new BankAccount();
-            BankAccount ba2 = new BankAccount();
-            var mutex = new Mutex();
-            var mutex2 = new Mutex();
-
-            var task = new List<Task>();
-
-            for (int j = 0; j < 10; j++)
+            int x = 0;
+            var tasks = new List<Task>();
+            for (int i = 0; i < 10; i++)
             {
-                task.Add(Task.Factory.StartNew(() =>
+                tasks.Add(Task.Factory.StartNew(() =>
                 {
-                    for (int i = 0; i < 1000; i++)
+                    // we are trying to read data, we might change data in between
+                    //padLock.EnterReadLock();
+                    padLock.EnterUpgradeableReadLock();
+
+                    Console.WriteLine($"x value after read lock is {x}");
+                    // every even counter, we want to change the value of x
+                    if (i % 2 == 0)
                     {
-                        var canlock = mutex.WaitOne();
-                        try
-                        {
-
-                            ba.AddBalance(1);
-                        }
-                        finally
-                        {
-                            if(canlock) mutex.ReleaseMutex();
-                        }
+                        padLock.EnterWriteLock();
+                        x = rand.Next(10);
+                        padLock.ExitWriteLock();
                     }
-                }));
 
-                task.Add(Task.Factory.StartNew(() =>
-                {
-                    for (int i = 0; i < 1000; i++)
-                    {
-                        var canlock = mutex2.WaitOne();
-                        try
-                        {
-
-                            ba2.AddBalance(1);
-                        }
-                        finally
-                        {
-                            if (canlock) mutex2.ReleaseMutex();
-                        }
-                    }
-                }));
-
-                task.Add(Task.Factory.StartNew(() =>
-                {
-                    for (int i = 0; i < 1000; i++)
-                    {
-                        bool haveLocked = Mutex.WaitAll(new[] {mutex, mutex2});
-                        try
-                        {
-                            ba.Transfer(ba2,1);
-                        }
-                        finally
-                        {
-                            if (haveLocked)
-                            {
-                                mutex.ReleaseMutex();
-                                mutex2.ReleaseMutex();
-                            }
-                        }
-                    }
+                    Thread.Sleep(5000);
+                    //padLock.ExitReadLock();
+                    padLock.ExitUpgradeableReadLock();
+                    Console.WriteLine($"Exited read lock with the value {x}");
                 }));
             }
 
-            Task.WaitAll(task.ToArray());
+            try
+            {
+                Task.WaitAll(tasks.ToArray());
+            }
+            catch (AggregateException ae)
+            {
+                ae.Handle(e =>
+                {
+                    Console.WriteLine(e);
+                    return true;
+                });
+            }
 
-            Console.WriteLine($"Final balance {ba.Balance}");
-            Console.WriteLine($"Final balance {ba2.Balance}");
+            while (true)
+            {
+                Console.ReadKey();
+                padLock.EnterWriteLock();
+                Console.WriteLine($"write lock acuire when x = {x}");
+                x = rand.Next(10);
+
+                Console.WriteLine($"writing value of x = {x}");
+                padLock.ExitWriteLock();
+                Console.WriteLine($"Exiting write lock with value = {x}");
+            }
+
         }
     }
 }
