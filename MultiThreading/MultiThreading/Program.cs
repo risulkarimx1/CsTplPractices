@@ -16,9 +16,12 @@ namespace MultiThreading
 
         public static void Main(string[] args)
         {
-            capitals["Russia"] = "Leningrad";
-            capitals.AddOrUpdate("Russia", "Moscow", (key, oldValue) => $"{oldValue} -> Moscow" );
-            Console.WriteLine($"capital of russia is {capitals["Russia"]}");
+//            capitals["Russia"] = "Leningrad";
+//            capitals.AddOrUpdate("Russia", "Moscow", (key, oldValue) => $"{oldValue} -> Moscow" );
+//            Console.WriteLine($"capital of russia is {capitals["Russia"]}");
+//            capitals["Sweden"] = "Upsala";
+            var capOfSweden = capitals.GetOrAdd("Sweden", s => "Stockholm");
+            Console.WriteLine($"Capital of sweden is {capOfSweden}");
         }
     }
 }
