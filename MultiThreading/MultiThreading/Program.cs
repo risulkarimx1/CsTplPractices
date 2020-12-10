@@ -16,12 +16,26 @@ namespace MultiThreading
 
         public static void Main(string[] args)
         {
-//            capitals["Russia"] = "Leningrad";
-//            capitals.AddOrUpdate("Russia", "Moscow", (key, oldValue) => $"{oldValue} -> Moscow" );
-//            Console.WriteLine($"capital of russia is {capitals["Russia"]}");
-//            capitals["Sweden"] = "Upsala";
-            var capOfSweden = capitals.GetOrAdd("Sweden", s => "Stockholm");
-            Console.WriteLine($"Capital of sweden is {capOfSweden}");
+            capitals["Russia"] = "Leningrad";
+            capitals.AddOrUpdate("Russia", "Moscow", (key, oldValue) => $"{oldValue} -> Moscow" );
+            Console.WriteLine($"capital of russia is {capitals["Russia"]}");
+            var toRemove = "Russia";
+            string removed;
+            var couldRemove = capitals.TryRemove(toRemove, out removed);
+            if (couldRemove)
+            {
+                Console.WriteLine($"removed capital value was {removed}");
+            }
+            else
+            {
+                Console.WriteLine($"cant remove the object {toRemove}");
+            }
+
+            capitals["Sweden"] = "Upsala";
+
+
+//            var capOfSweden = capitals.GetOrAdd("Sweden", s => "Stockholm");
+//            Console.WriteLine($"Capital of sweden is {capOfSweden}");
         }
     }
 }
