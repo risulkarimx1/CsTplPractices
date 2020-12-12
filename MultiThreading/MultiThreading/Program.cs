@@ -15,11 +15,11 @@ namespace MultiThreading
         {
             Console.WriteLine($"Buy cement");
             Thread.Sleep(2000);
-            Console.WriteLine($"Cement bought");
+            Console.WriteLine($"Cement bought"); // sets barrirr count 1.. phase 1
             barrier.SignalAndWait();
             Console.WriteLine($"Buy cranes");
-            Thread.Sleep(1500);
-            Console.WriteLine($"Cranes bought");
+            Thread.Sleep(3000);
+            Console.WriteLine($"Cranes bought");// sets barrier count 2 .. phase 2.. signals the barrier and prints out phase
             barrier.SignalAndWait();
         }
 
@@ -27,11 +27,11 @@ namespace MultiThreading
         {
             Console.WriteLine($"Construct 3d models");
             Thread.Sleep(3000);
-            Console.WriteLine($"3D Model done");
+            Console.WriteLine($"3D Model done"); // sets barrier count 2.. phase 1... signals the barrier and prints out phase
             barrier.SignalAndWait();
             Console.WriteLine($"Make bridge pillers");
-            Thread.Sleep(5000);
-            Console.WriteLine($"bridge piller completed");
+            Thread.Sleep(1000);
+            Console.WriteLine($"bridge piller completed"); // sets barrier count 1 phase 2
             barrier.SignalAndWait();
         }
 
