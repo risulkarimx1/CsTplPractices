@@ -7,13 +7,21 @@ namespace MultiThreading
     {
         public static void Main(string[] args)
         {
-            var boil = Task.Factory.StartNew(() => { Console.WriteLine("Boiliing water"); });
-            var pourWater = boil.ContinueWith(t =>
+            Task<string> task1 = Task.Factory.StartNew(() => "Task 1");
+            Task<string> task2 = Task.Factory.StartNew(() => "Task 2");
+
+            var task3 = Task.Factory.ContinueWhenAll(new[] {task1, task2}, tasks =>
             {
-                Console.WriteLine($"Completed task {boil.Id}. now Pouring water");
+                Console.WriteLine($"Task completed");
+                foreach (var task in tasks)
+                {
+                    Console.WriteLine($"{task.Result}");
+                }
+
+                Console.WriteLine($"All task completed");
             });
 
-            pourWater.Wait();
+            task3.Wait();
         }
 
     }
