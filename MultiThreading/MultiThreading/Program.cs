@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MultiThreading
@@ -7,16 +8,19 @@ namespace MultiThreading
     {
         public static void Main(string[] args)
         {
-            Task<string> task1 = Task.Factory.StartNew(() => "Task 1");
-            Task<string> task2 = Task.Factory.StartNew(() => "Task 2");
-
-            var task3 = Task.Factory.ContinueWhenAny(new[] {task1, task2}, t =>
+            var parentTask = new Task(() =>
             {
-                Console.WriteLine($"Task completed");
-                Console.WriteLine($"{t.Result}");
+                var childTask = new Task(() =>
+                {
+                    Console.WriteLine($"child task started");
+                    Thread.Sleep(5000);
+                    Console.WriteLine("Child task finished");
+                }, TaskCreationOptions.AttachedToParent);
+                childTask.Start();
             });
 
-            task3.Wait();
+            parentTask.Start();
+            parentTask.Wait();
         }
 
     }
