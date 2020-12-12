@@ -6,31 +6,52 @@ namespace MultiThreading
 {
     class Program
     {
+        static Barrier barrier = new Barrier(2, b =>
+        {
+            Console.WriteLine($"Phase {b.CurrentPhaseNumber} is finished");
+        });
+
+        static void Buying()
+        {
+            Console.WriteLine($"Buy cement");
+            Thread.Sleep(2000);
+            Console.WriteLine($"Cement bought");
+            barrier.SignalAndWait();
+            Console.WriteLine($"Buy cranes");
+            Thread.Sleep(1500);
+            Console.WriteLine($"Cranes bought");
+            barrier.SignalAndWait();
+        }
+
+        static void Construction()
+        {
+            Console.WriteLine($"Construct 3d models");
+            Thread.Sleep(3000);
+            Console.WriteLine($"3D Model done");
+            barrier.SignalAndWait();
+            Console.WriteLine($"Make bridge pillers");
+            Thread.Sleep(5000);
+            Console.WriteLine($"bridge piller completed");
+            barrier.SignalAndWait();
+        }
+
         public static void Main(string[] args)
         {
-            var parentTask = new Task(() =>
+            Task buyingTask = Task.Factory.StartNew(Buying);
+            Task constructionTask = Task.Factory.StartNew(Construction);
+
+            var finalTask = Task.Factory.ContinueWhenAll(new[] {buyingTask, constructionTask}, tasks =>
             {
-                var childTask = new Task(() =>
+                foreach (var task in tasks)
                 {
-                    Console.WriteLine($"child task started");
-                    Thread.Sleep(5000);
-                    Console.WriteLine("Child task finished");
-                    throw new Exception();
-                }, TaskCreationOptions.AttachedToParent);
+                    Console.WriteLine($"{task.Id} is completed");
+                }
 
-                Task successCompletionHandle = childTask.ContinueWith(
-                    t => { Console.WriteLine($"SUCCESS! Task {t.Id} status {t.Status}"); },
-                    TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnRanToCompletion);
-
-                Task failureCompletionHandle = childTask.ContinueWith(
-                    t => { Console.WriteLine($"FAIULURE! Task {t.Id} status {t.Status}"); },
-                    TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.NotOnRanToCompletion);
-
-                childTask.Start();
+                Console.WriteLine($"Bridge making process completed");
             });
 
-            parentTask.Start();
-            parentTask.Wait();
+            finalTask.Wait();
+
         }
 
     }
