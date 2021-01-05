@@ -6,53 +6,30 @@ namespace MultiThreading
 {
     class Program
     {
-        static Barrier barrier = new Barrier(2, b =>
-        {
-            Console.WriteLine($"Phase {b.CurrentPhaseNumber} is finished");
-        });
-
-        static void Buying()
-        {
-            Console.WriteLine($"Buy cement");
-            Thread.Sleep(2000);
-            Console.WriteLine($"Cement bought"); // sets barrirr count 1.. phase 1
-            barrier.SignalAndWait();
-            Console.WriteLine($"Buy cranes");
-            Thread.Sleep(3000);
-            Console.WriteLine($"Cranes bought");// sets barrier count 2 .. phase 2.. signals the barrier and prints out phase
-            barrier.SignalAndWait();
-        }
-
-        static void Construction()
-        {
-            Console.WriteLine($"Construct 3d models");
-            Thread.Sleep(3000);
-            Console.WriteLine($"3D Model done"); // sets barrier count 2.. phase 1... signals the barrier and prints out phase
-            barrier.SignalAndWait();
-            Console.WriteLine($"Make bridge pillers");
-            Thread.Sleep(1000);
-            Console.WriteLine($"bridge piller completed"); // sets barrier count 1 phase 2
-            barrier.SignalAndWait();
-        }
-
+        private static CountdownEvent countdownEvent = new CountdownEvent(5);
+        private static Random sleepTime = new Random();
         public static void Main(string[] args)
         {
-            Task buyingTask = Task.Factory.StartNew(Buying);
-            Task constructionTask = Task.Factory.StartNew(Construction);
-
-            var finalTask = Task.Factory.ContinueWhenAll(new[] {buyingTask, constructionTask}, tasks =>
+            for (int i = 0; i < 5; i++)
             {
-                foreach (var task in tasks)
+                Task.Factory.StartNew(() =>
                 {
-                    Console.WriteLine($"{task.Id} is completed");
-                }
+                    Console.WriteLine($"Entering task -> {Task.CurrentId}");
+                    Thread.Sleep(sleepTime.Next(3000));
+                    countdownEvent.Signal(); // decreses the count by 1 
+                    Console.WriteLine($"Exiting task -> {Task.CurrentId}");
+                });
+            }
 
-                Console.WriteLine($"Bridge making process completed");
+            var anotherTask = Task.Factory.StartNew(() =>
+            {
+                Console.WriteLine($"entering final task with id {Task.CurrentId}");
+                countdownEvent.Wait();
+                Console.WriteLine($"Finished all task....");
+                Console.WriteLine($"Finished final task....");
             });
 
-            finalTask.Wait();
-
+            anotherTask.Wait();
         }
-
     }
 }
