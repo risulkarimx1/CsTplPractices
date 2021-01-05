@@ -8,21 +8,23 @@ namespace MultiThreading
     {
         public static void Main(string[] args)
         {
-            var manualResetEvent = new ManualResetEventSlim();
+            var autoResetEvent = new AutoResetEvent(false);
 
             var task1= Task.Factory.StartNew(() =>
             {
                 Console.WriteLine($"starting task one {Task.CurrentId}");
                 Thread.Sleep(5000);
                 Console.WriteLine($"done with task one");
-                manualResetEvent.Set();
+                autoResetEvent.Set();
             });
 
             var task2 = Task.Factory.StartNew(() =>
             {
                 Console.WriteLine($"Starting task two {Task.CurrentId}");
-                manualResetEvent.Wait();
+                autoResetEvent.WaitOne(); // sets the reset event to false...
                 Console.WriteLine($"done with task two");
+                autoResetEvent.WaitOne(); // it will hang here forever...
+                                            // manualresetevent needs to be set again
             });
 
             task2.Wait();
