@@ -6,30 +6,26 @@ namespace MultiThreading
 {
     class Program
     {
-        private static CountdownEvent countdownEvent = new CountdownEvent(5);
-        private static Random sleepTime = new Random();
         public static void Main(string[] args)
         {
-            for (int i = 0; i < 5; i++)
-            {
-                Task.Factory.StartNew(() =>
-                {
-                    Console.WriteLine($"Entering task -> {Task.CurrentId}");
-                    Thread.Sleep(sleepTime.Next(3000));
-                    countdownEvent.Signal(); // decreses the count by 1 
-                    Console.WriteLine($"Exiting task -> {Task.CurrentId}");
-                });
-            }
+            var manualResetEvent = new ManualResetEventSlim();
 
-            var anotherTask = Task.Factory.StartNew(() =>
+            var task1= Task.Factory.StartNew(() =>
             {
-                Console.WriteLine($"entering final task with id {Task.CurrentId}");
-                countdownEvent.Wait();
-                Console.WriteLine($"Finished all task....");
-                Console.WriteLine($"Finished final task....");
+                Console.WriteLine($"starting task one {Task.CurrentId}");
+                Thread.Sleep(5000);
+                Console.WriteLine($"done with task one");
+                manualResetEvent.Set();
             });
 
-            anotherTask.Wait();
+            var task2 = Task.Factory.StartNew(() =>
+            {
+                Console.WriteLine($"Starting task two {Task.CurrentId}");
+                manualResetEvent.Wait();
+                Console.WriteLine($"done with task two");
+            });
+
+            task2.Wait();
         }
     }
 }
