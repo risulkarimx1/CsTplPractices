@@ -8,26 +8,23 @@ namespace MultiThreading
     {
         public static void Main(string[] args)
         {
-            var autoResetEvent = new AutoResetEvent(false);
-
-            var task1= Task.Factory.StartNew(() =>
+            var semaphore = new SemaphoreSlim(2, 10); // initial count 2, max 10
+            for (int i = 0; i < 20; i++)
             {
-                Console.WriteLine($"starting task one {Task.CurrentId}");
-                Thread.Sleep(5000);
-                Console.WriteLine($"done with task one");
-                autoResetEvent.Set();
-            });
+                Task.Factory.StartNew(() =>
+                {
+                    Console.WriteLine($"Entering task id {Task.CurrentId} > > ");
+                    semaphore.Wait(); // Release count --
+                    Console.WriteLine($"> > finished task {Task.CurrentId} XX");
+                });
+            }
 
-            var task2 = Task.Factory.StartNew(() =>
+            while (semaphore.CurrentCount <= 2)
             {
-                Console.WriteLine($"Starting task two {Task.CurrentId}");
-                autoResetEvent.WaitOne(); // sets the reset event to false...
-                Console.WriteLine($"done with task two");
-                autoResetEvent.WaitOne(); // it will hang here forever...
-                                            // manualresetevent needs to be set again
-            });
-
-            task2.Wait();
+                Console.WriteLine($"Semaphore count {semaphore.CurrentCount}");
+                Console.ReadKey();// press any key, releases 2 semaphore flags
+                semaphore.Release(2); // releaseCount += 2
+            }
         }
     }
 }
